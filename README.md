@@ -2,7 +2,6 @@
 
 Enterprise-grade Selenium Java + Cucumber + TestNG + API + Hybrid automation framework.
 
-
 ---
 
 ## 🚀 Framework Highlights
@@ -15,6 +14,7 @@ Enterprise-grade Selenium Java + Cucumber + TestNG + API + Hybrid automation fra
 - Extent Reports with screenshots
 - Tag-based execution
 - GitHub Actions CI integration
+- Multi-browser matrix execution
 
 ---
 
@@ -75,11 +75,46 @@ mvn clean test -Dtest=com.parabank.automation.runners.HybridTestRunner -Dcucumbe
 - Manual (workflow_dispatch)
 - Nightly schedule
 
-### Manual Inputs
-- suite → smoke / regression / ui / api / hybrid
-- env → qa / stage / dev
-- browser → chrome / firefox / edge
-- retry_count → 0–3
+---
+
+## 🧩 Execution Modes
+
+### Single Browser
+Run tests on a single browser (Chrome / Firefox / Edge)
+
+### Matrix Execution
+Run tests across multiple browsers in parallel
+
+---
+
+## 🌐 Browser Matrix Options
+
+- chrome-only
+- firefox-only
+- edge-only
+- chrome-firefox
+- chrome-edge
+- firefox-edge
+- chrome-firefox-edge
+
+---
+
+## 🧪 Example GitHub Manual Runs
+
+### Smoke (Single Browser)
+- suite: smoke  
+- execution_mode: single  
+- browser: chrome  
+
+### Smoke (Matrix)
+- suite: smoke  
+- execution_mode: matrix  
+- browser_matrix: chrome-firefox  
+
+### Regression (Full Matrix)
+- suite: regression  
+- execution_mode: matrix  
+- browser_matrix: chrome-firefox-edge  
 
 ---
 
@@ -87,10 +122,10 @@ mvn clean test -Dtest=com.parabank.automation.runners.HybridTestRunner -Dcucumbe
 
 Generated locally at:
 
-target/surefire-reports/
-test-output/reports/
-test-output/logs/
-test-output/screenshots/
+target/surefire-reports/  
+test-output/reports/  
+test-output/logs/  
+test-output/screenshots/  
 
 Also available as downloadable artifacts in GitHub Actions.
 
@@ -98,17 +133,26 @@ Also available as downloadable artifacts in GitHub Actions.
 
 ## 🧠 Recommended Execution Order
 
-1. Smoke
-2. UI
-3. API
-4. Hybrid
-5. Regression
+### Local
+1. Smoke  
+2. UI  
+3. API  
+4. Hybrid  
+5. Regression  
+
+### CI
+1. Smoke on PR  
+2. Matrix smoke  
+3. Nightly regression  
+4. Manual matrix regression  
 
 ---
 
 ## ⚠️ Notes
 
-- Hybrid tests are stateful → should run serially
-- Use tags for selective execution
-- Use regression runner for full validation
-- Retry mechanism handles flaky UI issues
+- Hybrid tests are stateful → should run serially  
+- Use tags for selective execution  
+- Use regression runner for full validation  
+- Retry mechanism handles flaky UI issues  
+- Multi-browser execution is handled via CI  
+- Supported browsers: Chrome, Firefox, Edge  
