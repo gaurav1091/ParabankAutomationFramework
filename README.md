@@ -2,6 +2,7 @@
 
 Enterprise-grade Selenium Java + Cucumber + TestNG + API + Hybrid automation framework.
 
+
 ---
 
 ## 🚀 Framework Highlights
