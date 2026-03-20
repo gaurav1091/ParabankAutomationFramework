@@ -1,0 +1,22 @@
+[
+  {
+    "key": "validUser",
+    "username": "john",
+    "password": "demo"
+  },
+  {
+    "key": "invalidUser",
+    "username": "invalidUser",
+    "password": "invalidPass"
+  },
+  {
+    "key": "validUserWrongPassword",
+    "username": "john",
+    "password": "wrongPass"
+  },
+  {
+    "key": "wrongUserValidPassword",
+    "username": "wrongUser",
+    "password": "demo"
+  }
+]
