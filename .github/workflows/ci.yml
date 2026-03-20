@@ -52,6 +52,51 @@ on:
           - "1"
           - "2"
           - "3"
+      thread_count:
+        description: "Thread count"
+        required: true
+        default: "5"
+        type: choice
+        options:
+          - "1"
+          - "2"
+          - "3"
+          - "4"
+          - "5"
+          - "6"
+          - "7"
+          - "8"
+          - "10"
+      data_provider_thread_count:
+        description: "Data provider thread count"
+        required: true
+        default: "2"
+        type: choice
+        options:
+          - "1"
+          - "2"
+          - "3"
+          - "4"
+          - "5"
+      parallel_mode:
+        description: "Parallel mode"
+        required: true
+        default: "methods"
+        type: choice
+        options:
+          - none
+          - methods
+          - classes
+          - tests
+          - instances
+      headless:
+        description: "Run in headless mode"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
   schedule:
     - cron: "30 3 * * *"
 
@@ -117,10 +162,26 @@ jobs:
             TEST_ENV="${{ github.event.inputs.env }}"
             TEST_BROWSER="${{ github.event.inputs.browser }}"
             RETRY_COUNT="${{ github.event.inputs.retry_count }}"
+            THREAD_COUNT="${{ github.event.inputs.thread_count }}"
+            DATA_PROVIDER_THREAD_COUNT="${{ github.event.inputs.data_provider_thread_count }}"
+            PARALLEL_MODE="${{ github.event.inputs.parallel_mode }}"
+            HEADLESS="${{ github.event.inputs.headless }}"
+          elif [[ "${{ github.event_name }}" == "schedule" ]]; then
+            TEST_ENV="qa"
+            TEST_BROWSER="chrome"
+            RETRY_COUNT="2"
+            THREAD_COUNT="5"
+            DATA_PROVIDER_THREAD_COUNT="2"
+            PARALLEL_MODE="methods"
+            HEADLESS="true"
           else
             TEST_ENV="qa"
             TEST_BROWSER="chrome"
             RETRY_COUNT="2"
+            THREAD_COUNT="5"
+            DATA_PROVIDER_THREAD_COUNT="2"
+            PARALLEL_MODE="methods"
+            HEADLESS="true"
           fi
 
           echo "suite=$SUITE" >> "$GITHUB_OUTPUT"
@@ -128,6 +189,10 @@ jobs:
           echo "test_env=$TEST_ENV" >> "$GITHUB_OUTPUT"
           echo "test_browser=$TEST_BROWSER" >> "$GITHUB_OUTPUT"
           echo "retry_count=$RETRY_COUNT" >> "$GITHUB_OUTPUT"
+          echo "thread_count=$THREAD_COUNT" >> "$GITHUB_OUTPUT"
+          echo "data_provider_thread_count=$DATA_PROVIDER_THREAD_COUNT" >> "$GITHUB_OUTPUT"
+          echo "parallel_mode=$PARALLEL_MODE" >> "$GITHUB_OUTPUT"
+          echo "headless=$HEADLESS" >> "$GITHUB_OUTPUT"
 
       - name: Print chosen configuration
         shell: bash
@@ -137,6 +202,10 @@ jobs:
           echo "Environment: ${{ steps.suite_config.outputs.test_env }}"
           echo "Browser: ${{ steps.suite_config.outputs.test_browser }}"
           echo "Retry Count: ${{ steps.suite_config.outputs.retry_count }}"
+          echo "Thread Count: ${{ steps.suite_config.outputs.thread_count }}"
+          echo "Data Provider Thread Count: ${{ steps.suite_config.outputs.data_provider_thread_count }}"
+          echo "Parallel Mode: ${{ steps.suite_config.outputs.parallel_mode }}"
+          echo "Headless: ${{ steps.suite_config.outputs.headless }}"
 
       - name: Run Maven suite
         shell: bash
@@ -144,10 +213,10 @@ jobs:
           mvn clean test \
             -Denv=${{ steps.suite_config.outputs.test_env }} \
             -Dbrowser=${{ steps.suite_config.outputs.test_browser }} \
-            -Dheadless=true \
-            -Dparallel.mode=methods \
-            -Dthread.count=5 \
-            -Ddata.provider.thread.count=2 \
+            -Dheadless=${{ steps.suite_config.outputs.headless }} \
+            -Dparallel.mode=${{ steps.suite_config.outputs.parallel_mode }} \
+            -Dthread.count=${{ steps.suite_config.outputs.thread_count }} \
+            -Ddata.provider.thread.count=${{ steps.suite_config.outputs.data_provider_thread_count }} \
             -Dretry.enabled=true \
             -Dretry.count=${{ steps.suite_config.outputs.retry_count }} \
             -Dtest=${{ steps.suite_config.outputs.runner_class }}
