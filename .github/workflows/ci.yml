@@ -24,6 +24,40 @@ on:
           - ui
           - api
           - hybrid
+
+      execution_mode:
+        description: "Execution mode"
+        required: true
+        default: "single"
+        type: choice
+        options:
+          - single
+          - matrix
+
+      browser:
+        description: "Single browser"
+        required: true
+        default: "chrome"
+        type: choice
+        options:
+          - chrome
+          - firefox
+          - edge
+
+      browser_matrix:
+        description: "Browser matrix set"
+        required: true
+        default: "chrome-firefox"
+        type: choice
+        options:
+          - chrome-only
+          - firefox-only
+          - edge-only
+          - chrome-firefox
+          - chrome-edge
+          - firefox-edge
+          - chrome-firefox-edge
+
       env:
         description: "Environment"
         required: true
@@ -33,15 +67,7 @@ on:
           - qa
           - stage
           - dev
-      browser:
-        description: "Browser"
-        required: true
-        default: "chrome"
-        type: choice
-        options:
-          - chrome
-          - firefox
-          - edge
+
       retry_count:
         description: "Retry count"
         required: true
@@ -52,6 +78,7 @@ on:
           - "1"
           - "2"
           - "3"
+
       thread_count:
         description: "Thread count"
         required: true
@@ -67,6 +94,7 @@ on:
           - "7"
           - "8"
           - "10"
+
       data_provider_thread_count:
         description: "Data provider thread count"
         required: true
@@ -78,6 +106,7 @@ on:
           - "3"
           - "4"
           - "5"
+
       parallel_mode:
         description: "Parallel mode"
         required: true
@@ -89,6 +118,7 @@ on:
           - classes
           - tests
           - instances
+
       headless:
         description: "Run in headless mode"
         required: true
@@ -97,6 +127,7 @@ on:
         options:
           - "true"
           - "false"
+
   schedule:
     - cron: "30 3 * * *"
 
@@ -108,32 +139,58 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Run Automation Suite
+  prepare:
+    name: Prepare execution config
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+
+    outputs:
+      suite: ${{ steps.config.outputs.suite }}
+      runner_class: ${{ steps.config.outputs.runner_class }}
+      test_env: ${{ steps.config.outputs.test_env }}
+      retry_count: ${{ steps.config.outputs.retry_count }}
+      thread_count: ${{ steps.config.outputs.thread_count }}
+      data_provider_thread_count: ${{ steps.config.outputs.data_provider_thread_count }}
+      parallel_mode: ${{ steps.config.outputs.parallel_mode }}
+      headless: ${{ steps.config.outputs.headless }}
+      execution_mode: ${{ steps.config.outputs.execution_mode }}
+      browsers_json: ${{ steps.config.outputs.browsers_json }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Java 11
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "11"
-          cache: maven
-
       - name: Determine suite configuration
-        id: suite_config
+        id: config
         shell: bash
         run: |
           if [[ "${{ github.event_name }}" == "schedule" ]]; then
             SUITE="regression"
+            EXECUTION_MODE="matrix"
+            BROWSER_MATRIX="chrome-firefox"
+            TEST_ENV="qa"
+            RETRY_COUNT="2"
+            THREAD_COUNT="5"
+            DATA_PROVIDER_THREAD_COUNT="2"
+            PARALLEL_MODE="methods"
+            HEADLESS="true"
           elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             SUITE="${{ github.event.inputs.suite }}"
+            EXECUTION_MODE="${{ github.event.inputs.execution_mode }}"
+            SINGLE_BROWSER="${{ github.event.inputs.browser }}"
+            BROWSER_MATRIX="${{ github.event.inputs.browser_matrix }}"
+            TEST_ENV="${{ github.event.inputs.env }}"
+            RETRY_COUNT="${{ github.event.inputs.retry_count }}"
+            THREAD_COUNT="${{ github.event.inputs.thread_count }}"
+            DATA_PROVIDER_THREAD_COUNT="${{ github.event.inputs.data_provider_thread_count }}"
+            PARALLEL_MODE="${{ github.event.inputs.parallel_mode }}"
+            HEADLESS="${{ github.event.inputs.headless }}"
           else
             SUITE="smoke"
+            EXECUTION_MODE="matrix"
+            BROWSER_MATRIX="chrome-firefox"
+            TEST_ENV="qa"
+            RETRY_COUNT="2"
+            THREAD_COUNT="5"
+            DATA_PROVIDER_THREAD_COUNT="2"
+            PARALLEL_MODE="methods"
+            HEADLESS="true"
           fi
 
           case "$SUITE" in
@@ -158,74 +215,115 @@ jobs:
               ;;
           esac
 
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            TEST_ENV="${{ github.event.inputs.env }}"
-            TEST_BROWSER="${{ github.event.inputs.browser }}"
-            RETRY_COUNT="${{ github.event.inputs.retry_count }}"
-            THREAD_COUNT="${{ github.event.inputs.thread_count }}"
-            DATA_PROVIDER_THREAD_COUNT="${{ github.event.inputs.data_provider_thread_count }}"
-            PARALLEL_MODE="${{ github.event.inputs.parallel_mode }}"
-            HEADLESS="${{ github.event.inputs.headless }}"
-          elif [[ "${{ github.event_name }}" == "schedule" ]]; then
-            TEST_ENV="qa"
-            TEST_BROWSER="chrome"
-            RETRY_COUNT="2"
-            THREAD_COUNT="5"
-            DATA_PROVIDER_THREAD_COUNT="2"
-            PARALLEL_MODE="methods"
-            HEADLESS="true"
+          if [[ "$EXECUTION_MODE" == "single" ]]; then
+            if [[ -z "$SINGLE_BROWSER" ]]; then
+              SINGLE_BROWSER="chrome"
+            fi
+            BROWSERS_JSON="[\"$SINGLE_BROWSER\"]"
           else
-            TEST_ENV="qa"
-            TEST_BROWSER="chrome"
-            RETRY_COUNT="2"
-            THREAD_COUNT="5"
-            DATA_PROVIDER_THREAD_COUNT="2"
-            PARALLEL_MODE="methods"
-            HEADLESS="true"
+            case "$BROWSER_MATRIX" in
+              chrome-only)
+                BROWSERS_JSON='["chrome"]'
+                ;;
+              firefox-only)
+                BROWSERS_JSON='["firefox"]'
+                ;;
+              edge-only)
+                BROWSERS_JSON='["edge"]'
+                ;;
+              chrome-firefox)
+                BROWSERS_JSON='["chrome","firefox"]'
+                ;;
+              chrome-edge)
+                BROWSERS_JSON='["chrome","edge"]'
+                ;;
+              firefox-edge)
+                BROWSERS_JSON='["firefox","edge"]'
+                ;;
+              chrome-firefox-edge)
+                BROWSERS_JSON='["chrome","firefox","edge"]'
+                ;;
+              *)
+                echo "Unsupported browser matrix: $BROWSER_MATRIX"
+                exit 1
+                ;;
+            esac
           fi
 
           echo "suite=$SUITE" >> "$GITHUB_OUTPUT"
           echo "runner_class=$RUNNER_CLASS" >> "$GITHUB_OUTPUT"
           echo "test_env=$TEST_ENV" >> "$GITHUB_OUTPUT"
-          echo "test_browser=$TEST_BROWSER" >> "$GITHUB_OUTPUT"
           echo "retry_count=$RETRY_COUNT" >> "$GITHUB_OUTPUT"
           echo "thread_count=$THREAD_COUNT" >> "$GITHUB_OUTPUT"
           echo "data_provider_thread_count=$DATA_PROVIDER_THREAD_COUNT" >> "$GITHUB_OUTPUT"
           echo "parallel_mode=$PARALLEL_MODE" >> "$GITHUB_OUTPUT"
           echo "headless=$HEADLESS" >> "$GITHUB_OUTPUT"
+          echo "execution_mode=$EXECUTION_MODE" >> "$GITHUB_OUTPUT"
+          echo "browsers_json=$BROWSERS_JSON" >> "$GITHUB_OUTPUT"
 
       - name: Print chosen configuration
         shell: bash
         run: |
-          echo "Suite: ${{ steps.suite_config.outputs.suite }}"
-          echo "Runner: ${{ steps.suite_config.outputs.runner_class }}"
-          echo "Environment: ${{ steps.suite_config.outputs.test_env }}"
-          echo "Browser: ${{ steps.suite_config.outputs.test_browser }}"
-          echo "Retry Count: ${{ steps.suite_config.outputs.retry_count }}"
-          echo "Thread Count: ${{ steps.suite_config.outputs.thread_count }}"
-          echo "Data Provider Thread Count: ${{ steps.suite_config.outputs.data_provider_thread_count }}"
-          echo "Parallel Mode: ${{ steps.suite_config.outputs.parallel_mode }}"
-          echo "Headless: ${{ steps.suite_config.outputs.headless }}"
+          echo "Suite: ${{ steps.config.outputs.suite }}"
+          echo "Runner: ${{ steps.config.outputs.runner_class }}"
+          echo "Environment: ${{ steps.config.outputs.test_env }}"
+          echo "Retry Count: ${{ steps.config.outputs.retry_count }}"
+          echo "Thread Count: ${{ steps.config.outputs.thread_count }}"
+          echo "Data Provider Thread Count: ${{ steps.config.outputs.data_provider_thread_count }}"
+          echo "Parallel Mode: ${{ steps.config.outputs.parallel_mode }}"
+          echo "Headless: ${{ steps.config.outputs.headless }}"
+          echo "Execution Mode: ${{ steps.config.outputs.execution_mode }}"
+          echo "Browsers JSON: ${{ steps.config.outputs.browsers_json }}"
+
+  test:
+    name: Run ${{ needs.prepare.outputs.suite }} on ${{ matrix.browser }}
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: ${{ fromJson(needs.prepare.outputs.browsers_json) }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "11"
+          cache: maven
+
+      - name: Print execution target
+        shell: bash
+        run: |
+          echo "Suite: ${{ needs.prepare.outputs.suite }}"
+          echo "Browser: ${{ matrix.browser }}"
+          echo "Runner: ${{ needs.prepare.outputs.runner_class }}"
+          echo "Environment: ${{ needs.prepare.outputs.test_env }}"
 
       - name: Run Maven suite
         shell: bash
         run: |
           mvn clean test \
-            -Denv=${{ steps.suite_config.outputs.test_env }} \
-            -Dbrowser=${{ steps.suite_config.outputs.test_browser }} \
-            -Dheadless=${{ steps.suite_config.outputs.headless }} \
-            -Dparallel.mode=${{ steps.suite_config.outputs.parallel_mode }} \
-            -Dthread.count=${{ steps.suite_config.outputs.thread_count }} \
-            -Ddata.provider.thread.count=${{ steps.suite_config.outputs.data_provider_thread_count }} \
+            -Denv=${{ needs.prepare.outputs.test_env }} \
+            -Dbrowser=${{ matrix.browser }} \
+            -Dheadless=${{ needs.prepare.outputs.headless }} \
+            -Dparallel.mode=${{ needs.prepare.outputs.parallel_mode }} \
+            -Dthread.count=${{ needs.prepare.outputs.thread_count }} \
+            -Ddata.provider.thread.count=${{ needs.prepare.outputs.data_provider_thread_count }} \
             -Dretry.enabled=true \
-            -Dretry.count=${{ steps.suite_config.outputs.retry_count }} \
-            -Dtest=${{ steps.suite_config.outputs.runner_class }}
+            -Dretry.count=${{ needs.prepare.outputs.retry_count }} \
+            -Dtest=${{ needs.prepare.outputs.runner_class }}
 
       - name: Upload surefire reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: surefire-reports-${{ steps.suite_config.outputs.suite }}
+          name: surefire-reports-${{ needs.prepare.outputs.suite }}-${{ matrix.browser }}
           path: |
             target/surefire-reports/**
           if-no-files-found: warn
@@ -235,7 +333,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: framework-reports-${{ steps.suite_config.outputs.suite }}
+          name: framework-reports-${{ needs.prepare.outputs.suite }}-${{ matrix.browser }}
           path: |
             test-output/reports/**
             test-output/logs/**
