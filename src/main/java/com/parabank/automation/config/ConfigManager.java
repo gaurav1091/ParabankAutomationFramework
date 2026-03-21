@@ -71,6 +71,20 @@ public final class ConfigManager {
 		return getProperty("password");
 	}
 
+	public String getExecutionMode() {
+		String executionMode = getProperty("execution.mode");
+		return (executionMode == null || executionMode.trim().isEmpty()) ? "local" : executionMode.trim().toLowerCase();
+	}
+
+	public boolean isRemoteExecution() {
+		return "remote".equalsIgnoreCase(getExecutionMode());
+	}
+
+	public String getSeleniumRemoteUrl() {
+		String remoteUrl = getProperty("selenium.remote.url");
+		return (remoteUrl == null || remoteUrl.trim().isEmpty()) ? "http://localhost:4444/wd/hub" : remoteUrl.trim();
+	}
+
 	public int getImplicitWait() {
 		return getIntProperty("implicit.wait", FrameworkConstants.DEFAULT_IMPLICIT_WAIT);
 	}
