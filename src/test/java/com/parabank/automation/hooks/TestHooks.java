@@ -4,6 +4,7 @@ import com.parabank.automation.config.ConfigManager;
 import com.parabank.automation.config.EnvironmentManager;
 import com.parabank.automation.context.ContextObjectManager;
 import com.parabank.automation.driver.DriverFactory;
+import com.parabank.automation.driver.DriverManager;
 import com.parabank.automation.reports.ExtentManager;
 import com.parabank.automation.reports.ExtentTestManager;
 import com.parabank.automation.utils.FailureDiagnosticsUtils;
@@ -32,6 +33,9 @@ public class TestHooks {
 		ExtentTestManager.info("Environment: " + EnvironmentManager.getCurrentEnvironment());
 		ExtentTestManager.info("Base URL: " + ConfigManager.getInstance().getBaseUrl());
 		ExtentTestManager.info("Execution Mode: " + ConfigManager.getInstance().getExecutionMode());
+		ExtentTestManager
+				.info("Scenario Execution Type: " + ScenarioExecutionSupport.getExecutionModeDescription(scenario));
+		ExtentTestManager.info("Browser Required For Scenario: " + ScenarioExecutionSupport.requiresBrowser(scenario));
 
 		Collection<String> tags = scenario.getSourceTagNames();
 		if (tags != null && !tags.isEmpty()) {
@@ -44,6 +48,11 @@ public class TestHooks {
 
 	@Before(order = 1)
 	public void setUp(Scenario scenario) {
+		if (!ScenarioExecutionSupport.requiresBrowser(scenario)) {
+			ExtentTestManager.info("Skipping browser startup because this is an API-only scenario.");
+			return;
+		}
+
 		WebDriver driver = DriverFactory.initializeDriver();
 		driver.get(ConfigManager.getInstance().getBaseUrl());
 		ExtentTestManager.info("Application launched successfully.");
@@ -55,17 +64,31 @@ public class TestHooks {
 
 		if (scenario.isFailed()) {
 			ExtentTestManager.fail("Scenario failed: " + scenario.getName());
-			FailureDiagnosticsUtils.logUiFailureDetails(scenario.getName());
-			ExtentTestManager.captureAndAttachFailureScreenshot("scenario_failure_" + sanitizedScenarioName);
+
+			if (DriverManager.hasDriver()) {
+				FailureDiagnosticsUtils.logUiFailureDetails(scenario.getName());
+				ExtentTestManager.captureAndAttachFailureScreenshot("scenario_failure_" + sanitizedScenarioName);
+			} else {
+				ExtentTestManager.info(
+						"Skipping UI failure diagnostics and screenshot because no browser was started for this scenario.");
+			}
 		} else {
 			ExtentTestManager.pass("Scenario passed: " + scenario.getName());
-			ExtentTestManager.captureAndAttachPassScreenshot("scenario_pass_" + sanitizedScenarioName);
+
+			if (DriverManager.hasDriver()) {
+				ExtentTestManager.captureAndAttachPassScreenshot("scenario_pass_" + sanitizedScenarioName);
+			}
 		}
 	}
 
 	@After(order = 0)
 	public void tearDown(Scenario scenario) {
-		DriverFactory.quitDriver();
+		if (DriverManager.hasDriver()) {
+			DriverFactory.quitDriver();
+		} else {
+			ExtentTestManager.info("No browser teardown required for this scenario.");
+		}
+
 		ExtentTestManager.unload();
 	}
 
