@@ -11,10 +11,10 @@ public final class ConfigManager {
 
 	private ConfigManager() {
 		frameworkProperties = PropertyReader
-				.loadProperties(FrameworkConstants.CONFIG_FILE_PATH + FrameworkConstants.FRAMEWORK_CONFIG_FILE);
+				.loadProperties(FrameworkConstants.CONFIG_CLASSPATH_ROOT + FrameworkConstants.FRAMEWORK_CONFIG_FILE);
 
 		environmentProperties = PropertyReader.loadProperties(
-				FrameworkConstants.CONFIG_FILE_PATH + EnvironmentManager.getEnvironmentConfigFileName());
+				FrameworkConstants.CONFIG_CLASSPATH_ROOT + EnvironmentManager.getEnvironmentConfigFileName());
 	}
 
 	public static ConfigManager getInstance() {

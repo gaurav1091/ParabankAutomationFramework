@@ -6,6 +6,7 @@ import com.parabank.automation.context.ContextObjectManager;
 import com.parabank.automation.driver.DriverFactory;
 import com.parabank.automation.reports.ExtentManager;
 import com.parabank.automation.reports.ExtentTestManager;
+import com.parabank.automation.utils.FailureDiagnosticsUtils;
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import io.cucumber.java.Scenario;
@@ -30,6 +31,7 @@ public class TestHooks {
 		ExtentTestManager.info("Browser: " + ConfigManager.getInstance().getBrowser());
 		ExtentTestManager.info("Environment: " + EnvironmentManager.getCurrentEnvironment());
 		ExtentTestManager.info("Base URL: " + ConfigManager.getInstance().getBaseUrl());
+		ExtentTestManager.info("Execution Mode: " + ConfigManager.getInstance().getExecutionMode());
 
 		Collection<String> tags = scenario.getSourceTagNames();
 		if (tags != null && !tags.isEmpty()) {
@@ -53,6 +55,7 @@ public class TestHooks {
 
 		if (scenario.isFailed()) {
 			ExtentTestManager.fail("Scenario failed: " + scenario.getName());
+			FailureDiagnosticsUtils.logUiFailureDetails(scenario.getName());
 			ExtentTestManager.captureAndAttachFailureScreenshot("scenario_failure_" + sanitizedScenarioName);
 		} else {
 			ExtentTestManager.pass("Scenario passed: " + scenario.getName());

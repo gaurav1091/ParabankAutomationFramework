@@ -5,7 +5,9 @@ public final class FrameworkConstants {
 	private FrameworkConstants() {
 	}
 
-	public static final String CONFIG_FILE_PATH = "src/test/resources/config/";
+	public static final String CONFIG_CLASSPATH_ROOT = "config/";
+	public static final String TEST_DATA_CLASSPATH_ROOT = "testdata/";
+
 	public static final String FRAMEWORK_CONFIG_FILE = "framework.properties";
 
 	public static final String QA_CONFIG_FILE = "qa.properties";

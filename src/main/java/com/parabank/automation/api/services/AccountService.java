@@ -3,6 +3,7 @@ package com.parabank.automation.api.services;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.parabank.automation.api.client.ParabankApiClient;
+import com.parabank.automation.utils.ApiLoggingUtils;
 
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
@@ -49,15 +50,16 @@ public class AccountService {
 
 	private List<Map<String, Object>> extractAccounts(HttpResponse<String> response) {
 		if (response.statusCode() != 200) {
-			throw new RuntimeException("Accounts API returned non-200 status. Status: " + response.statusCode()
-					+ ", Body: " + response.body());
+			throw ApiLoggingUtils.logFailureAndBuildException("Accounts API returned non-200 status. Status: "
+					+ response.statusCode() + " | Body: " + response.body());
 		}
 
 		try {
 			return OBJECT_MAPPER.readValue(response.body(), new TypeReference<List<Map<String, Object>>>() {
 			});
 		} catch (Exception exception) {
-			throw new RuntimeException("Failed to parse accounts API response.", exception);
+			throw ApiLoggingUtils.logFailureAndBuildException(
+					"Failed to parse accounts API response body. Body: " + response.body(), exception);
 		}
 	}
 
