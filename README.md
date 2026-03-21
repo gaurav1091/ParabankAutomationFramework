@@ -15,6 +15,7 @@ Enterprise-grade Selenium Java + Cucumber + TestNG + API + Hybrid automation fra
 - Tag-based execution
 - GitHub Actions CI integration
 - Multi-browser matrix execution
+- Dockerized execution support
 
 ---
 
@@ -75,46 +76,46 @@ mvn clean test -Dtest=com.parabank.automation.runners.HybridTestRunner -Dcucumbe
 - Manual (workflow_dispatch)
 - Nightly schedule
 
----
-
-## 🧩 Execution Modes
-
-### Single Browser
-Run tests on a single browser (Chrome / Firefox / Edge)
-
-### Matrix Execution
-Run tests across multiple browsers in parallel
-
----
-
-## 🌐 Browser Matrix Options
-
-- chrome-only
-- firefox-only
-- edge-only
-- chrome-firefox
-- chrome-edge
-- firefox-edge
-- chrome-firefox-edge
+### Manual Inputs
+- suite
+- execution_mode
+- browser
+- browser_matrix
+- env
+- retry_count
+- thread_count
+- data_provider_thread_count
+- parallel_mode
+- headless
 
 ---
 
-## 🧪 Example GitHub Manual Runs
+## 🐳 Docker Execution
 
-### Smoke (Single Browser)
-- suite: smoke  
-- execution_mode: single  
-- browser: chrome  
+### Docker files added
+- Dockerfile
+- docker-compose.yml
+- docker/entrypoint.sh
+- .dockerignore
 
-### Smoke (Matrix)
-- suite: smoke  
-- execution_mode: matrix  
-- browser_matrix: chrome-firefox  
+### Docker browser support
+- Chromium
+- Firefox
 
-### Regression (Full Matrix)
-- suite: regression  
-- execution_mode: matrix  
-- browser_matrix: chrome-firefox-edge  
+### Docker smoke run (Chromium)
+TEST_ENV=qa TEST_RUNNER=com.parabank.automation.runners.SmokeTestRunner PARALLEL_MODE=none THREAD_COUNT=1 DATA_PROVIDER_THREAD_COUNT=1 RETRY_COUNT=1 docker compose --profile chromium up --build --abort-on-container-exit --exit-code-from test-runner-chromium
+
+### Docker regression run (Chromium)
+TEST_ENV=qa TEST_RUNNER=com.parabank.automation.runners.RegressionTestRunner PARALLEL_MODE=methods THREAD_COUNT=5 DATA_PROVIDER_THREAD_COUNT=2 RETRY_COUNT=2 docker compose --profile chromium up --build --abort-on-container-exit --exit-code-from test-runner-chromium
+
+### Docker smoke run (Firefox)
+TEST_ENV=qa TEST_RUNNER=com.parabank.automation.runners.SmokeTestRunner PARALLEL_MODE=none THREAD_COUNT=1 DATA_PROVIDER_THREAD_COUNT=1 RETRY_COUNT=1 docker compose --profile firefox up --build --abort-on-container-exit --exit-code-from test-runner-firefox
+
+### Docker regression run (Firefox)
+TEST_ENV=qa TEST_RUNNER=com.parabank.automation.runners.RegressionTestRunner PARALLEL_MODE=methods THREAD_COUNT=5 DATA_PROVIDER_THREAD_COUNT=2 RETRY_COUNT=2 docker compose --profile firefox up --build --abort-on-container-exit --exit-code-from test-runner-firefox
+
+### Docker cleanup
+docker compose down --remove-orphans
 
 ---
 
@@ -122,37 +123,58 @@ Run tests across multiple browsers in parallel
 
 Generated locally at:
 
-target/surefire-reports/  
-test-output/reports/  
-test-output/logs/  
-test-output/screenshots/  
+target/surefire-reports/
+test-output/reports/
+test-output/logs/
+test-output/screenshots/
 
 Also available as downloadable artifacts in GitHub Actions.
+
+## Docker Reports
+
+Docker keeps target inside the container, but copies reports to:
+
+test-output/docker-artifacts/surefire-reports/
+test-output/docker-artifacts/cucumber-reports/
+
+Also Available:
+
+test-output/reports/
+test-output/logs/
+test-output/screenshots/
+
 
 ---
 
 ## 🧠 Recommended Execution Order
 
 ### Local
-1. Smoke  
-2. UI  
-3. API  
-4. Hybrid  
-5. Regression  
+1. Smoke
+2. UI
+3. API
+4. Hybrid
+5. Regression
 
 ### CI
-1. Smoke on PR  
-2. Matrix smoke  
-3. Nightly regression  
-4. Manual matrix regression  
+1. Smoke on PR
+2. Matrix smoke
+3. Nightly regression
+4. Manual matrix regression
+
+### Docker
+1. Smoke on Chrome
+2. Regression on Chrome
+3. Smoke on Firefox
+4. Regression on Firefox
 
 ---
 
 ## ⚠️ Notes
 
-- Hybrid tests are stateful → should run serially  
-- Use tags for selective execution  
-- Use regression runner for full validation  
-- Retry mechanism handles flaky UI issues  
-- Multi-browser execution is handled via CI  
-- Supported browsers: Chrome, Firefox, Edge  
+- Hybrid tests are stateful → should run serially
+- Use tags for selective execution
+- Use regression runner for full validation
+- Retry mechanism handles flaky UI issues
+- Multi-browser execution is handled via CI
+- Docker execution uses remote WebDriver
+- Docker browser support in this setup is Chrome and Firefox
