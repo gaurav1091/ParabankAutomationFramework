@@ -11,9 +11,9 @@
 		<listener class-name="com.parabank.automation.listeners.SuiteListener" />
 	</listeners>
 
-	<test name="ParaBank Cucumber Parallel Tests" preserve-order="false">
+	<test name="ParaBank Parallel Tests" preserve-order="false">
 		<classes>
-			<class name="com.parabank.automation.runners.TestRunner" />
+			<class name="com.parabank.automation.runners.SmokeTestRunner" />
 		</classes>
 	</test>
 
