@@ -2,6 +2,7 @@ package com.parabank.automation.stepdefinitions.api;
 
 import com.parabank.automation.api.assertions.ApiAssertions;
 import com.parabank.automation.api.services.AccountService;
+import com.parabank.automation.config.FrameworkConstants;
 import com.parabank.automation.context.ContextObjectManager;
 import com.parabank.automation.context.ScenarioContext;
 import com.parabank.automation.enums.ContextKey;
@@ -11,6 +12,9 @@ import java.util.List;
 import java.util.Map;
 
 public class AccountApiSteps {
+
+	private static final String ACCOUNTS_RESPONSE_SCHEMA = FrameworkConstants.SCHEMA_CLASSPATH_ROOT
+			+ "accounts-response-schema.json";
 
 	private final ScenarioContext scenarioContext;
 	private final AccountService accountService;
@@ -55,6 +59,8 @@ public class AccountApiSteps {
 		List<Map<String, Object>> apiAccounts = (List<Map<String, Object>>) scenarioContext
 				.get(ContextKey.API_ACCOUNTS);
 
+		ApiAssertions.assertJsonMatchesSchema(apiAccounts, ACCOUNTS_RESPONSE_SCHEMA,
+				"Accounts API schema validation failed.");
 		ApiAssertions.assertAllAccountsHaveValidCoreFields(apiAccounts,
 				"Accounts API returned one or more invalid account objects.");
 	}

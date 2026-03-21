@@ -30,6 +30,21 @@ public final class ReportPathManager {
 		return FrameworkConstants.REPORTS_FOLDER + LATEST_REPORT_FILE_NAME;
 	}
 
+	public static String getCucumberJsonReportPath() {
+		createDirectoryIfNotExists(FrameworkConstants.CUCUMBER_REPORTS_FOLDER);
+		return FrameworkConstants.CUCUMBER_JSON_REPORT_FILE;
+	}
+
+	public static String getCucumberJunitReportPath() {
+		createDirectoryIfNotExists(FrameworkConstants.CUCUMBER_REPORTS_FOLDER);
+		return FrameworkConstants.CUCUMBER_JUNIT_REPORT_FILE;
+	}
+
+	public static String getCucumberHtmlReportPath() {
+		createDirectoryIfNotExists(FrameworkConstants.CUCUMBER_REPORTS_FOLDER);
+		return FrameworkConstants.CUCUMBER_HTML_REPORT_FILE;
+	}
+
 	public static void copyAsLatestReport(String sourceReportPath) {
 		if (sourceReportPath == null || sourceReportPath.trim().isEmpty()) {
 			return;
