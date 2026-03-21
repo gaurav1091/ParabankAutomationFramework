@@ -154,6 +154,19 @@ public final class ConfigManager {
 		return getIntProperty("api.read.timeout.seconds", FrameworkConstants.DEFAULT_API_READ_TIMEOUT_SECONDS);
 	}
 
+	public boolean isStartupValidationEnabled() {
+		String value = getProperty("startup.validation.enabled");
+		if (value == null || value.trim().isEmpty()) {
+			return FrameworkConstants.DEFAULT_STARTUP_VALIDATION_ENABLED;
+		}
+		return Boolean.parseBoolean(value.trim());
+	}
+
+	public int getStartupValidationTimeoutSeconds() {
+		return getIntProperty("startup.validation.timeout.seconds",
+				FrameworkConstants.DEFAULT_STARTUP_VALIDATION_TIMEOUT_SECONDS);
+	}
+
 	private int getIntProperty(String key, int defaultValue) {
 		String value = getProperty(key);
 

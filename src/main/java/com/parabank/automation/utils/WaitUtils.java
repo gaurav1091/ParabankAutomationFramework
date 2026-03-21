@@ -20,26 +20,23 @@ import java.util.Arrays;
 
 public class WaitUtils {
 
+	private static final Logger LOGGER = LogManager.getLogger(WaitUtils.class);
+
 	private final WebDriver driver;
 	private final FluentWait<WebDriver> wait;
-	private static final Logger LOGGER = LogManager.getLogger(WaitUtils.class);
 
 	public WaitUtils() {
 		this.driver = DriverManager.getDriver();
-
-		if (this.driver == null) {
-			throw new RuntimeException("WebDriver is null. WaitUtils cannot be initialized.");
-		}
-
-		this.wait = new FluentWait<>(driver)
-				.withTimeout(Duration.ofSeconds(ConfigManager.getInstance().getExplicitWait()))
-				.pollingEvery(Duration.ofMillis(ConfigManager.getInstance().getSmartWaitPollingMillis()))
-				.ignoring(StaleElementReferenceException.class).ignoring(NoSuchElementException.class);
+		this.wait = (driver == null) ? null
+				: new FluentWait<>(driver)
+						.withTimeout(Duration.ofSeconds(ConfigManager.getInstance().getExplicitWait()))
+						.pollingEvery(Duration.ofMillis(ConfigManager.getInstance().getSmartWaitPollingMillis()))
+						.ignoring(StaleElementReferenceException.class).ignoring(NoSuchElementException.class);
 	}
 
 	public WebElement waitForElement(By locator, WaitStrategy waitStrategy) {
 		try {
-			return wait.until(webDriver -> findElementByStrategy(locator, waitStrategy));
+			return getWait().until(webDriver -> findElementByStrategy(locator, waitStrategy));
 		} catch (TimeoutException exception) {
 			throw new RuntimeException(
 					"Element was not found using wait strategy " + waitStrategy + " for locator: " + locator,
@@ -49,7 +46,7 @@ public class WaitUtils {
 
 	public WebElement waitForAnyVisible(By... locators) {
 		try {
-			return wait.until(webDriver -> {
+			return getWait().until(webDriver -> {
 				for (By locator : locators) {
 					try {
 						WebElement element = webDriver.findElement(locator);
@@ -79,7 +76,7 @@ public class WaitUtils {
 
 	public WebElement waitForElement(WebElement element, WaitStrategy waitStrategy) {
 		try {
-			return wait.until(webDriver -> {
+			return getWait().until(webDriver -> {
 				switch (waitStrategy) {
 				case CLICKABLE:
 					return (element != null && element.isDisplayed() && element.isEnabled()) ? element : null;
@@ -190,7 +187,7 @@ public class WaitUtils {
 	}
 
 	private WebElement findElementByStrategy(By locator, WaitStrategy waitStrategy) {
-		WebElement element = driver.findElement(locator);
+		WebElement element = getDriver().findElement(locator);
 
 		switch (waitStrategy) {
 		case CLICKABLE:
@@ -206,10 +203,25 @@ public class WaitUtils {
 
 	private boolean waitForCondition(ExpectedCondition<Boolean> condition) {
 		try {
-			Boolean result = wait.until(condition);
+			Boolean result = getWait().until(condition);
 			return Boolean.TRUE.equals(result);
 		} catch (TimeoutException exception) {
 			return false;
 		}
+	}
+
+	private WebDriver getDriver() {
+		if (driver == null) {
+			throw new IllegalStateException("WebDriver is null. WaitUtils cannot be used without an active driver.");
+		}
+		return driver;
+	}
+
+	private FluentWait<WebDriver> getWait() {
+		if (wait == null) {
+			throw new IllegalStateException(
+					"WaitUtils cannot be used because WebDriver is not initialized for the current thread.");
+		}
+		return wait;
 	}
 }

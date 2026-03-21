@@ -2,7 +2,6 @@ package com.parabank.automation.base;
 
 import com.parabank.automation.driver.DriverManager;
 import com.parabank.automation.utils.ElementUtils;
-import com.parabank.automation.utils.JavaScriptUtils;
 import com.parabank.automation.utils.WaitUtils;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.PageFactory;
@@ -12,13 +11,11 @@ public abstract class BasePage {
 	protected WebDriver driver;
 	protected WaitUtils waitUtils;
 	protected ElementUtils elementUtils;
-	protected JavaScriptUtils javaScriptUtils;
 
 	protected BasePage() {
 		this.driver = DriverManager.getDriver();
 		this.waitUtils = new WaitUtils();
 		this.elementUtils = new ElementUtils();
-		this.javaScriptUtils = new JavaScriptUtils();
 		PageFactory.initElements(driver, this);
 	}
 

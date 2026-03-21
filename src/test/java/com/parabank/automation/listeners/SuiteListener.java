@@ -8,7 +8,7 @@ public class SuiteListener implements ISuiteListener {
 
 	@Override
 	public void onStart(ISuite suite) {
-		ExtentManager.getInstance();
+		ExtentManager.initialize();
 	}
 
 	@Override

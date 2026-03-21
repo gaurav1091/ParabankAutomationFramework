@@ -1,5 +1,7 @@
 package com.parabank.automation.api.assertions;
 
+import com.parabank.automation.utils.JsonSchemaValidator;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +31,15 @@ public final class ApiAssertions {
 
 		if (!actualSet.equals(expectedSet)) {
 			throw new AssertionError(message + " | Expected=" + expectedSet + " | Actual=" + actualSet);
+		}
+	}
+
+	public static void assertJsonMatchesSchema(Object payload, String schemaClasspathResource, String message) {
+		List<String> violations = JsonSchemaValidator.validate(payload, schemaClasspathResource);
+
+		if (!violations.isEmpty()) {
+			throw new AssertionError(
+					message + " | Schema Resource=" + schemaClasspathResource + " | Violations=" + violations);
 		}
 	}
 
