@@ -201,7 +201,7 @@ jobs:
               RUNNER_CLASS="com.parabank.automation.runners.RegressionTestRunner"
               ;;
             ui)
-              RUNNER_CLASS="com.parabank.automation.runners.TestRunner"
+              RUNNER_CLASS="com.parabank.automation.runners.UiTestRunner"
               ;;
             api)
               RUNNER_CLASS="com.parabank.automation.runners.ApiTestRunner"
