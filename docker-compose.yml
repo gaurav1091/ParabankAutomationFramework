@@ -1,3 +1,5 @@
+name: parabank-automation
+
 services:
   selenium-chromium:
     image: selenium/standalone-chromium:4.29.0
@@ -49,4 +51,18 @@ services:
     depends_on:
       - selenium-firefox
     environment:
-      TEST_ENV:
+      TEST_ENV: ${TEST_ENV:-qa}
+      BROWSER: firefox
+      EXECUTION_MODE: remote
+      SELENIUM_REMOTE_URL: http://selenium-firefox:4444/wd/hub
+      HEADLESS: ${HEADLESS:-false}
+      PARALLEL_MODE: ${PARALLEL_MODE:-none}
+      THREAD_COUNT: ${THREAD_COUNT:-1}
+      DATA_PROVIDER_THREAD_COUNT: ${DATA_PROVIDER_THREAD_COUNT:-1}
+      RETRY_ENABLED: ${RETRY_ENABLED:-true}
+      RETRY_COUNT: ${RETRY_COUNT:-1}
+      TEST_RUNNER: ${TEST_RUNNER:-com.parabank.automation.runners.SmokeTestRunner}
+      CUCUMBER_FILTER_TAGS: ${CUCUMBER_FILTER_TAGS:-}
+      CUCUMBER_FEATURES: ${CUCUMBER_FEATURES:-}
+    volumes:
+      - ./test-output/firefox:/app/test-output

@@ -50,9 +50,16 @@ public class TestListener implements ITestListener {
 						+ currentRetryCount + " of " + maxRetryCount + ".");
 			}
 
+			ExtentTestManager.log(Status.FAIL,
+					"Failure Details -> Test Class: " + result.getTestClass().getName() + " | Method: "
+							+ result.getMethod().getMethodName() + " | Duration: "
+							+ Math.max(0L, result.getEndMillis() - result.getStartMillis()) + " ms");
+
 			Throwable throwable = result.getThrowable();
 
 			if (throwable != null) {
+				ExtentTestManager.log(Status.FAIL,
+						"Failure Message -> " + throwable.getClass().getSimpleName() + ": " + throwable.getMessage());
 				ExtentTestManager.log(Status.FAIL, throwable);
 			} else {
 				ExtentTestManager.log(Status.FAIL, "TestNG marked scenario execution as failed.");
