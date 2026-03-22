@@ -319,13 +319,22 @@ jobs:
             -Dretry.count=${{ needs.prepare.outputs.retry_count }} \
             -Dtest=${{ needs.prepare.outputs.runner_class }}
 
+      - name: Debug generated test-output structure
+        if: always()
+        shell: bash
+        run: |
+          echo "test-output directories:"
+          find test-output -maxdepth 4 -type d | sort || true
+          echo
+          echo "test-output files:"
+          find test-output -maxdepth 6 -type f | sort || true
+
       - name: Upload surefire reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: surefire-reports-${{ needs.prepare.outputs.suite }}-${{ matrix.browser }}
-          path: |
-            target/surefire-reports/**
+          path: target/surefire-reports
           if-no-files-found: warn
           retention-days: 14
 
@@ -334,8 +343,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: framework-reports-${{ needs.prepare.outputs.suite }}-${{ matrix.browser }}
-          path: |
-            test-output/**
+          path: test-output
           if-no-files-found: warn
           retention-days: 14
 
@@ -359,10 +367,10 @@ jobs:
         shell: bash
         run: |
           echo "Downloaded artifact directories:"
-          find downloaded-framework-reports -maxdepth 4 -type d | sort || true
+          find downloaded-framework-reports -maxdepth 6 -type d | sort || true
           echo
           echo "Downloaded files:"
-          find downloaded-framework-reports -maxdepth 6 -type f | sort || true
+          find downloaded-framework-reports -maxdepth 8 -type f | sort || true
 
       - name: Build static Pages site for Extent reports
         shell: bash
