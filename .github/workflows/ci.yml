@@ -367,13 +367,12 @@ jobs:
           REPORT_ROOT="$SITE_DIR/reports"
 
           mkdir -p "$REPORT_ROOT"
-
-          cat > "$SITE_DIR/.nojekyll" <<'EOF'
-          EOF
+          touch "$SITE_DIR/.nojekyll"
 
           FOUND_REPORTS="false"
 
           shopt -s nullglob
+
           for artifact_dir in downloaded-framework-reports/*; do
             if [[ ! -d "$artifact_dir" ]]; then
               continue
@@ -384,24 +383,53 @@ jobs:
 
             mkdir -p "$target_dir"
 
-            if [[ -d "$artifact_dir/test-output/reports" ]]; then
+            source_reports_dir=""
+            source_cucumber_dir=""
+            source_screenshots_dir=""
+            source_logs_dir=""
+
+            if [[ -d "$artifact_dir/reports" ]]; then
+              source_reports_dir="$artifact_dir/reports"
+            elif [[ -d "$artifact_dir/test-output/reports" ]]; then
+              source_reports_dir="$artifact_dir/test-output/reports"
+            fi
+
+            if [[ -d "$artifact_dir/cucumber" ]]; then
+              source_cucumber_dir="$artifact_dir/cucumber"
+            elif [[ -d "$artifact_dir/test-output/cucumber" ]]; then
+              source_cucumber_dir="$artifact_dir/test-output/cucumber"
+            fi
+
+            if [[ -d "$artifact_dir/screenshots" ]]; then
+              source_screenshots_dir="$artifact_dir/screenshots"
+            elif [[ -d "$artifact_dir/test-output/screenshots" ]]; then
+              source_screenshots_dir="$artifact_dir/test-output/screenshots"
+            fi
+
+            if [[ -d "$artifact_dir/logs" ]]; then
+              source_logs_dir="$artifact_dir/logs"
+            elif [[ -d "$artifact_dir/test-output/logs" ]]; then
+              source_logs_dir="$artifact_dir/test-output/logs"
+            fi
+
+            if [[ -n "$source_reports_dir" ]]; then
               mkdir -p "$target_dir/reports"
-              cp -R "$artifact_dir/test-output/reports/." "$target_dir/reports/"
+              cp -R "$source_reports_dir/." "$target_dir/reports/"
             fi
 
-            if [[ -d "$artifact_dir/test-output/cucumber" ]]; then
+            if [[ -n "$source_cucumber_dir" ]]; then
               mkdir -p "$target_dir/cucumber"
-              cp -R "$artifact_dir/test-output/cucumber/." "$target_dir/cucumber/"
+              cp -R "$source_cucumber_dir/." "$target_dir/cucumber/"
             fi
 
-            if [[ -d "$artifact_dir/test-output/screenshots" ]]; then
+            if [[ -n "$source_screenshots_dir" ]]; then
               mkdir -p "$target_dir/screenshots"
-              cp -R "$artifact_dir/test-output/screenshots/." "$target_dir/screenshots/"
+              cp -R "$source_screenshots_dir/." "$target_dir/screenshots/"
             fi
 
-            if [[ -d "$artifact_dir/test-output/logs" ]]; then
+            if [[ -n "$source_logs_dir" ]]; then
               mkdir -p "$target_dir/logs"
-              cp -R "$artifact_dir/test-output/logs/." "$target_dir/logs/"
+              cp -R "$source_logs_dir/." "$target_dir/logs/"
             fi
 
             if [[ -f "$target_dir/reports/ExtentReport_Latest.html" ]]; then
