@@ -335,10 +335,7 @@ jobs:
         with:
           name: framework-reports-${{ needs.prepare.outputs.suite }}-${{ matrix.browser }}
           path: |
-            test-output/reports/**
-            test-output/cucumber/**
-            test-output/logs/**
-            test-output/screenshots/**
+            test-output/**
           if-no-files-found: warn
           retention-days: 14
 
@@ -357,6 +354,15 @@ jobs:
           pattern: framework-reports-${{ needs.prepare.outputs.suite }}-*
           path: downloaded-framework-reports
           merge-multiple: false
+
+      - name: Debug downloaded framework report structure
+        shell: bash
+        run: |
+          echo "Downloaded artifact directories:"
+          find downloaded-framework-reports -maxdepth 4 -type d | sort || true
+          echo
+          echo "Downloaded files:"
+          find downloaded-framework-reports -maxdepth 6 -type f | sort || true
 
       - name: Build static Pages site for Extent reports
         shell: bash
@@ -379,60 +385,36 @@ jobs:
             fi
 
             artifact_name="$(basename "$artifact_dir")"
-            target_dir="$REPORT_ROOT/$artifact_name"
+            source_root="$artifact_dir"
 
+            if [[ -d "$artifact_dir/test-output" ]]; then
+              source_root="$artifact_dir/test-output"
+            fi
+
+            target_dir="$REPORT_ROOT/$artifact_name"
             mkdir -p "$target_dir"
 
-            source_reports_dir=""
-            source_cucumber_dir=""
-            source_screenshots_dir=""
-            source_logs_dir=""
-
-            if [[ -d "$artifact_dir/reports" ]]; then
-              source_reports_dir="$artifact_dir/reports"
-            elif [[ -d "$artifact_dir/test-output/reports" ]]; then
-              source_reports_dir="$artifact_dir/test-output/reports"
-            fi
-
-            if [[ -d "$artifact_dir/cucumber" ]]; then
-              source_cucumber_dir="$artifact_dir/cucumber"
-            elif [[ -d "$artifact_dir/test-output/cucumber" ]]; then
-              source_cucumber_dir="$artifact_dir/test-output/cucumber"
-            fi
-
-            if [[ -d "$artifact_dir/screenshots" ]]; then
-              source_screenshots_dir="$artifact_dir/screenshots"
-            elif [[ -d "$artifact_dir/test-output/screenshots" ]]; then
-              source_screenshots_dir="$artifact_dir/test-output/screenshots"
-            fi
-
-            if [[ -d "$artifact_dir/logs" ]]; then
-              source_logs_dir="$artifact_dir/logs"
-            elif [[ -d "$artifact_dir/test-output/logs" ]]; then
-              source_logs_dir="$artifact_dir/test-output/logs"
-            fi
-
-            if [[ -n "$source_reports_dir" ]]; then
+            if [[ -d "$source_root/reports" ]]; then
               mkdir -p "$target_dir/reports"
-              cp -R "$source_reports_dir/." "$target_dir/reports/"
+              cp -R "$source_root/reports/." "$target_dir/reports/"
             fi
 
-            if [[ -n "$source_cucumber_dir" ]]; then
+            if [[ -d "$source_root/cucumber" ]]; then
               mkdir -p "$target_dir/cucumber"
-              cp -R "$source_cucumber_dir/." "$target_dir/cucumber/"
+              cp -R "$source_root/cucumber/." "$target_dir/cucumber/"
             fi
 
-            if [[ -n "$source_screenshots_dir" ]]; then
+            if [[ -d "$source_root/screenshots" ]]; then
               mkdir -p "$target_dir/screenshots"
-              cp -R "$source_screenshots_dir/." "$target_dir/screenshots/"
+              cp -R "$source_root/screenshots/." "$target_dir/screenshots/"
             fi
 
-            if [[ -n "$source_logs_dir" ]]; then
+            if [[ -d "$source_root/logs" ]]; then
               mkdir -p "$target_dir/logs"
-              cp -R "$source_logs_dir/." "$target_dir/logs/"
+              cp -R "$source_root/logs/." "$target_dir/logs/"
             fi
 
-            if [[ -f "$target_dir/reports/ExtentReport_Latest.html" ]]; then
+            if compgen -G "$target_dir/reports/ExtentReport*.html" > /dev/null; then
               FOUND_REPORTS="true"
             fi
           done
@@ -473,12 +455,10 @@ jobs:
                   echo "      <li><a href=\"reports/${artifact_name}/reports/ExtentReport_Latest.html\">Open Extent latest report</a></li>"
                 fi
 
-                if compgen -G "$artifact_dir/reports/ExtentReport_*.html" > /dev/null; then
-                  latest_timestamped="$(find "$artifact_dir/reports" -maxdepth 1 -name 'ExtentReport_*.html' | sort | tail -n 1)"
-                  if [[ -n "$latest_timestamped" ]]; then
-                    latest_file="$(basename "$latest_timestamped")"
-                    echo "      <li><a href=\"reports/${artifact_name}/reports/${latest_file}\">Open latest timestamped Extent report</a></li>"
-                  fi
+                latest_timestamped="$(find "$artifact_dir/reports" -maxdepth 1 -name 'ExtentReport_*.html' ! -name 'ExtentReport_Latest.html' | sort | tail -n 1 || true)"
+                if [[ -n "$latest_timestamped" ]]; then
+                  latest_file="$(basename "$latest_timestamped")"
+                  echo "      <li><a href=\"reports/${artifact_name}/reports/${latest_file}\">Open latest timestamped Extent report</a></li>"
                 fi
 
                 if [[ -f "$artifact_dir/cucumber/cucumber.html" ]]; then
