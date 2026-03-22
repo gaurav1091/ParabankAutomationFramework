@@ -35,7 +35,7 @@ on:
           - matrix
 
       browser:
-        description: "Single browser"
+        description: "Single browser (used only when execution_mode = single)"
         required: true
         default: "chrome"
         type: choice
@@ -45,7 +45,7 @@ on:
           - edge
 
       browser_matrix:
-        description: "Browser matrix set"
+        description: "Browser matrix set (used only when execution_mode = matrix)"
         required: true
         default: "chrome-firefox"
         type: choice
@@ -336,7 +336,159 @@ jobs:
           name: framework-reports-${{ needs.prepare.outputs.suite }}-${{ matrix.browser }}
           path: |
             test-output/reports/**
+            test-output/cucumber/**
             test-output/logs/**
             test-output/screenshots/**
           if-no-files-found: warn
           retention-days: 14
+
+  build-extent-pages-site:
+    name: Build Extent report site
+    needs:
+      - prepare
+      - test
+    if: ${{ always() && github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download framework report artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: framework-reports-${{ needs.prepare.outputs.suite }}-*
+          path: downloaded-framework-reports
+          merge-multiple: false
+
+      - name: Build static Pages site for Extent reports
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SITE_DIR="pages-site"
+          REPORT_ROOT="$SITE_DIR/reports"
+
+          mkdir -p "$REPORT_ROOT"
+
+          cat > "$SITE_DIR/.nojekyll" <<'EOF'
+          EOF
+
+          FOUND_REPORTS="false"
+
+          shopt -s nullglob
+          for artifact_dir in downloaded-framework-reports/*; do
+            if [[ ! -d "$artifact_dir" ]]; then
+              continue
+            fi
+
+            artifact_name="$(basename "$artifact_dir")"
+            target_dir="$REPORT_ROOT/$artifact_name"
+
+            mkdir -p "$target_dir"
+
+            if [[ -d "$artifact_dir/test-output/reports" ]]; then
+              mkdir -p "$target_dir/reports"
+              cp -R "$artifact_dir/test-output/reports/." "$target_dir/reports/"
+            fi
+
+            if [[ -d "$artifact_dir/test-output/cucumber" ]]; then
+              mkdir -p "$target_dir/cucumber"
+              cp -R "$artifact_dir/test-output/cucumber/." "$target_dir/cucumber/"
+            fi
+
+            if [[ -d "$artifact_dir/test-output/screenshots" ]]; then
+              mkdir -p "$target_dir/screenshots"
+              cp -R "$artifact_dir/test-output/screenshots/." "$target_dir/screenshots/"
+            fi
+
+            if [[ -d "$artifact_dir/test-output/logs" ]]; then
+              mkdir -p "$target_dir/logs"
+              cp -R "$artifact_dir/test-output/logs/." "$target_dir/logs/"
+            fi
+
+            if [[ -f "$target_dir/reports/ExtentReport_Latest.html" ]]; then
+              FOUND_REPORTS="true"
+            fi
+          done
+
+          {
+            echo '<!DOCTYPE html>'
+            echo '<html lang="en">'
+            echo '<head>'
+            echo '  <meta charset="UTF-8">'
+            echo '  <meta name="viewport" content="width=device-width, initial-scale=1.0">'
+            echo '  <title>Parabank Automation Reports</title>'
+            echo '  <style>'
+            echo '    body { font-family: Arial, sans-serif; margin: 32px; line-height: 1.5; }'
+            echo '    h1 { margin-bottom: 8px; }'
+            echo '    .meta { color: #555; margin-bottom: 24px; }'
+            echo '    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }'
+            echo '    a { text-decoration: none; }'
+            echo '    ul { margin-top: 8px; }'
+            echo '  </style>'
+            echo '</head>'
+            echo '<body>'
+            echo '  <h1>Parabank Automation Reports</h1>'
+            echo "  <div class=\"meta\">Workflow: ${GITHUB_WORKFLOW} | Run Number: ${GITHUB_RUN_NUMBER} | Suite: ${{ needs.prepare.outputs.suite }} | Generated on: $(date -u '+%Y-%m-%d %H:%M:%S UTC')</div>"
+
+            if [[ "$FOUND_REPORTS" == "true" ]]; then
+              for artifact_dir in "$REPORT_ROOT"/*; do
+                if [[ ! -d "$artifact_dir" ]]; then
+                  continue
+                fi
+
+                artifact_name="$(basename "$artifact_dir")"
+
+                echo '  <div class="card">'
+                echo "    <h2>${artifact_name}</h2>"
+                echo '    <ul>'
+
+                if [[ -f "$artifact_dir/reports/ExtentReport_Latest.html" ]]; then
+                  echo "      <li><a href=\"reports/${artifact_name}/reports/ExtentReport_Latest.html\">Open Extent latest report</a></li>"
+                fi
+
+                if compgen -G "$artifact_dir/reports/ExtentReport_*.html" > /dev/null; then
+                  latest_timestamped="$(find "$artifact_dir/reports" -maxdepth 1 -name 'ExtentReport_*.html' | sort | tail -n 1)"
+                  if [[ -n "$latest_timestamped" ]]; then
+                    latest_file="$(basename "$latest_timestamped")"
+                    echo "      <li><a href=\"reports/${artifact_name}/reports/${latest_file}\">Open latest timestamped Extent report</a></li>"
+                  fi
+                fi
+
+                if [[ -f "$artifact_dir/cucumber/cucumber.html" ]]; then
+                  echo "      <li><a href=\"reports/${artifact_name}/cucumber/cucumber.html\">Open Cucumber HTML report</a></li>"
+                fi
+
+                echo '    </ul>'
+                echo '  </div>'
+              done
+            else
+              echo '  <div class="card"><strong>No framework reports were found for this run.</strong></div>'
+            fi
+
+            echo '</body>'
+            echo '</html>'
+          } > "$SITE_DIR/index.html"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: pages-site
+
+  deploy-extent-pages-site:
+    name: Deploy Extent report site
+    needs: build-extent-pages-site
+    if: ${{ always() && github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch }}
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+      contents: read
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
