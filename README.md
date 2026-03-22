@@ -121,26 +121,37 @@ docker compose down --remove-orphans
 
 ## 📊 Reports & Artifacts
 
-Generated locally at:
+#### 🌐 Hosted Reports (Recommended)
+
+Accessible via GitHub Pages:
+
+https://gaurav1091.github.io/ParabankAutomationFramework/
+
+#### 📦 CI Artifacts (Downloadable)
 
 target/surefire-reports/
-test-output/reports/
-test-output/logs/
-test-output/screenshots/
 
-Also available as downloadable artifacts in GitHub Actions.
+test-output/reports/
+
+test-output/logs/
+
+test-output/screenshots/
 
 ## Docker Reports
 
 Docker keeps target inside the container, but copies reports to:
 
 test-output/docker-artifacts/surefire-reports/
+
 test-output/docker-artifacts/cucumber-reports/
+
 
 Also Available:
 
 test-output/reports/
+
 test-output/logs/
+
 test-output/screenshots/
 
 
