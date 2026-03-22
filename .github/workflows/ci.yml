@@ -307,6 +307,9 @@ jobs:
 
       - name: Run Maven suite
         shell: bash
+        env:
+          PARABANK_USERNAME: ${{ secrets.PARABANK_USERNAME }}
+          PARABANK_PASSWORD: ${{ secrets.PARABANK_PASSWORD }}
         run: |
           mvn clean test \
             -Denv=${{ needs.prepare.outputs.test_env }} \

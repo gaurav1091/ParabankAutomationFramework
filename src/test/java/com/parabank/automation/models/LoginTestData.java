@@ -1,5 +1,7 @@
 package com.parabank.automation.models;
 
+import com.parabank.automation.config.SensitiveDataResolver;
+
 public class LoginTestData {
 
 	private String key;
@@ -24,7 +26,7 @@ public class LoginTestData {
 	}
 
 	public String getUsername() {
-		return username;
+		return SensitiveDataResolver.resolveCredentialValue(username, "Login test data username for key: " + key);
 	}
 
 	public void setUsername(String username) {
@@ -32,7 +34,7 @@ public class LoginTestData {
 	}
 
 	public String getPassword() {
-		return password;
+		return SensitiveDataResolver.resolveCredentialValue(password, "Login test data password for key: " + key);
 	}
 
 	public void setPassword(String password) {

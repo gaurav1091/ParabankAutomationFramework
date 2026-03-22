@@ -64,11 +64,11 @@ public final class ConfigManager {
 	}
 
 	public String getUsername() {
-		return getProperty("username");
+		return SensitiveDataResolver.resolveCredentialValue(getProperty("username"), "Config username property");
 	}
 
 	public String getPassword() {
-		return getProperty("password");
+		return SensitiveDataResolver.resolveCredentialValue(getProperty("password"), "Config password property");
 	}
 
 	public String getExecutionMode() {
