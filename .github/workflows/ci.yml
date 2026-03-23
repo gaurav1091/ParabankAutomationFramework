@@ -557,6 +557,8 @@ jobs:
           touch "$SITE_DIR/.nojekyll"
 
           FOUND_REPORTS="false"
+          : > "$SITE_DIR/cards.html"
+          : > "$RUN_ROOT/cards.html"
 
           shopt -s nullglob
 
@@ -625,6 +627,30 @@ jobs:
               echo "</ul>"
               echo "</div>"
             } >> "$SITE_DIR/cards.html"
+
+            {
+              echo "<div class=\"card\">"
+              echo "<h2>Browser: ${browser_display}</h2>"
+              echo "<div class=\"meta\">Artifact: ${artifact_name}</div>"
+              echo "<ul>"
+
+              if [[ -f "$target_dir/reports/ExtentReport_Latest.html" ]]; then
+                echo "<li><a href=\"${browser_name}/reports/ExtentReport_Latest.html\">Open Extent latest report</a></li>"
+              fi
+
+              latest_timestamped="$(find "$target_dir/reports" -maxdepth 1 -name 'ExtentReport_*.html' ! -name 'ExtentReport_Latest.html' | sort | tail -n 1 || true)"
+              if [[ -n "$latest_timestamped" ]]; then
+                latest_file="$(basename "$latest_timestamped")"
+                echo "<li><a href=\"${browser_name}/reports/${latest_file}\">Open latest timestamped Extent report</a></li>"
+              fi
+
+              if [[ -f "$target_dir/cucumber/cucumber.html" ]]; then
+                echo "<li><a href=\"${browser_name}/cucumber/cucumber.html\">Open Cucumber HTML report</a></li>"
+              fi
+
+              echo "</ul>"
+              echo "</div>"
+            } >> "$RUN_ROOT/cards.html"
           done
 
           {
@@ -658,6 +684,39 @@ jobs:
             echo '</body>'
             echo '</html>'
           } > "$SITE_DIR/index.html"
+
+          {
+            echo '<!DOCTYPE html>'
+            echo '<html lang="en">'
+            echo '<head>'
+            echo '  <meta charset="UTF-8">'
+            echo '  <meta name="viewport" content="width=device-width, initial-scale=1.0">'
+            echo '  <title>Parabank Run Reports</title>'
+            echo '  <style>'
+            echo '    body { font-family: Arial, sans-serif; margin: 32px; line-height: 1.5; }'
+            echo '    h1 { margin-bottom: 8px; }'
+            echo '    .meta { color: #555; margin-bottom: 24px; }'
+            echo '    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }'
+            echo '    a { text-decoration: none; }'
+            echo '    ul { margin-top: 8px; }'
+            echo '  </style>'
+            echo '</head>'
+            echo '<body>'
+            echo "  <h1>Run ${GITHUB_RUN_NUMBER} Reports</h1>"
+            echo "  <div class=\"meta\">Workflow: ${GITHUB_WORKFLOW} | Suite: ${{ needs.prepare.outputs.suite }} | Generated on: $(date -u '+%Y-%m-%d %H:%M:%S UTC')</div>"
+            echo '  <p><a href="../../index.html">Back to root reports page</a></p>'
+
+            if [[ "$FOUND_REPORTS" == "true" ]]; then
+              if [[ -f "$RUN_ROOT/cards.html" ]]; then
+                cat "$RUN_ROOT/cards.html"
+              fi
+            else
+              echo '  <div class="card"><strong>No framework reports were found for this run.</strong></div>'
+            fi
+
+            echo '</body>'
+            echo '</html>'
+          } > "$RUN_ROOT/index.html"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
