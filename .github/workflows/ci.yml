@@ -683,3 +683,6 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+please provide me the full and final copy-paste ready version of this current file with required fix in it only for the root-vs-run-specific Pages URL issue.
+We are not touching any other issue.
