@@ -39,7 +39,6 @@
 	</properties>
 
 	<dependencies>
-
 		<dependency>
 			<groupId>org.seleniumhq.selenium</groupId>
 			<artifactId>selenium-java</artifactId>
@@ -135,12 +134,10 @@
 			<artifactId>commons-lang3</artifactId>
 			<version>${commons-lang3.version}</version>
 		</dependency>
-
 	</dependencies>
 
 	<build>
 		<plugins>
-
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -198,7 +195,24 @@
 						<browser>${browser}</browser>
 						<headless>${headless}</headless>
 						<execution.mode>${execution.mode}</execution.mode>
+						<remote.provider>${remote.provider}</remote.provider>
 						<selenium.remote.url>${selenium.remote.url}</selenium.remote.url>
+
+						<browserstack.hub.url>${browserstack.hub.url}</browserstack.hub.url>
+						<browserstack.username>${browserstack.username}</browserstack.username>
+						<browserstack.access.key>${browserstack.access.key}</browserstack.access.key>
+						<browserstack.os>${browserstack.os}</browserstack.os>
+						<browserstack.os.version>${browserstack.os.version}</browserstack.os.version>
+						<browserstack.browser.version>
+							${browserstack.browser.version}</browserstack.browser.version>
+						<browserstack.project.name>${browserstack.project.name}</browserstack.project.name>
+						<browserstack.build.name>${browserstack.build.name}</browserstack.build.name>
+						<browserstack.session.name>${browserstack.session.name}</browserstack.session.name>
+						<browserstack.local>${browserstack.local}</browserstack.local>
+						<browserstack.debug>${browserstack.debug}</browserstack.debug>
+						<browserstack.network.logs>${browserstack.network.logs}</browserstack.network.logs>
+						<browserstack.console.logs>${browserstack.console.logs}</browserstack.console.logs>
+
 						<thread.count>${thread.count}</thread.count>
 						<data.provider.thread.count>
 							${data.provider.thread.count}</data.provider.thread.count>
@@ -214,12 +228,10 @@
 					</systemPropertyVariables>
 				</configuration>
 			</plugin>
-
 		</plugins>
 	</build>
 
 	<profiles>
-
 		<profile>
 			<id>qa</id>
 			<properties>
@@ -245,7 +257,6 @@
 			<id>static-analysis</id>
 			<build>
 				<plugins>
-
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-checkstyle-plugin</artifactId>
@@ -314,11 +325,9 @@
 							</execution>
 						</executions>
 					</plugin>
-
 				</plugins>
 			</build>
 		</profile>
-
 	</profiles>
 
 </project>
