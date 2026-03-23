@@ -677,9 +677,22 @@ jobs:
 
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ format('{0}reports/run-{1}/', steps.deployment.outputs.page_url, github.run_number) }}
 
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Publish Pages links to workflow summary
+        shell: bash
+        run: |
+          ROOT_URL="${{ steps.deployment.outputs.page_url }}"
+          RUN_URL="${ROOT_URL}reports/run-${{ github.run_number }}/"
+
+          {
+            echo "## Parabank Reports"
+            echo
+            echo "- Current run report URL: ${RUN_URL}"
+            echo "- Root Pages URL: ${ROOT_URL}"
+          } >> "$GITHUB_STEP_SUMMARY"
