@@ -174,7 +174,7 @@ on:
           - "false"
 
   schedule:
-    - cron: "30 3 * * *"
+    - cron: "0 3 20 * *"
 
 permissions:
   contents: read
